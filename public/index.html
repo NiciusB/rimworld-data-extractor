@@ -1,0 +1,72 @@
+<html>
+<head>
+    <title>Rimworld Auto-Documentation (HTML Based on RimWorld XML Auto-Documentation by milon)</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+        
+        h1,
+        h2 {
+            margin: 3px;
+            text-align: center;
+        }
+        
+        #HTML_Side {
+            background-color: #ddd;
+            height: 95%;
+            width: 28%;
+            padding: 0 20px 0 0;
+            float: left;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #HTML_Side #idsList {
+            flex-grow: 1;
+            overflow: auto;
+            padding: 0 10px;
+        }
+        
+        #HTML_Side a {
+            display: block;
+            padding: 5px;
+        }
+        
+        #HTML_Side a:hover {
+            background-color: #eee;
+        }
+        
+        #HTML_Side #searchInput {
+            width: 100%;
+            margin-bottom: 0.5em;
+            font-size: 1.1em;
+            padding: 0.3em;
+        }
+        
+        #HTML_Info {
+            background-color: #ddd;
+            height: 95%;
+            display: block;
+        }
+        
+        #HTML_Info pre {
+            max-width: 100%;
+            max-height: 500px;
+            overflow: auto;
+            padding: 10px;
+            background-color: #eee;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Rimworld XML Auto-Documentation</h1>
+    <div id="HTML_Side">
+        <input id="searchInput" type="search" autocomplete="off" value="" placeholder="Search" />
+        <div id="idsList"></div>
+    </div>
+    <div id="HTML_Info"></div>
+    <script type="text/javascript" src="index.js"></script>
+</body>
+</html>
