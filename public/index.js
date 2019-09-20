@@ -8,18 +8,31 @@ async function main() {
 
   Object.keys(defsByType).forEach(defType => {
     defsByType[defType]
-      .filter(def => def.defName || def.$) // Filter out weird ones. They're sounds afaik
+      .map(def => {
+        if (def.defName || def.$) def.__name = def.defName ? def.defName[0] : def.$.Name
+        return def
+      })
+      .filter(def => def.__name) // Filter out weird ones. They're sounds afaik
       .forEach(def => {
-        def.__name = def.defName ? def.defName[0] : def.$.Name
         def.__parentName = (def.parent && def.parent[0]) || (def.$ && def.$.ParentName)
-        defs[def.__name] = def
+        def.__parentID = def.__parentName
+        def.__defType = defType
+        def.__defID = encodeURIComponent(def.__name)
+        while (defs[def.__defID]) {
+          if (def.__defID.indexOf('-') !== -1)
+            def.__defID = def.__defID.split('-')[0] + ('-' + (parseInt(def.__defID.split('-')[1]) + 1))
+          else def.__defID = def.__defID + '-2'
+        }
+        defs[def.__defID] = def
       })
   })
 
   window.addEventListener('hashchange', onHashChange, false)
   function onHashChange() {
     let hash = location.hash.slice(1)
-    if (!defs[hash]) hash = 'Root'
+    if (hash === '') hash = 'Root'
+
+    if (!defs[hash]) return
 
     // add html content
     const defContent = getDefContent(hash)
@@ -28,7 +41,6 @@ async function main() {
     }
     infoList.appendChild(defContent)
   }
-  onHashChange()
 
   const onSearchChange = debounce(() => {
     const term = searchInput.value
@@ -40,11 +52,11 @@ async function main() {
     idsList.appendChild(idsContent)
   }, 500)
   searchInput.addEventListener('input', onSearchChange)
-  onSearchChange()
 
   function getIDsListContent(term) {
     const container = document.createElement('div')
     term = term.toLowerCase()
+    let lastDefType = null
     Object.values(defs).forEach(def => {
       if (
         JSON.stringify(def)
@@ -53,62 +65,61 @@ async function main() {
       )
         return
 
+      if (lastDefType !== def.__defType) {
+        lastDefType = def.__defType
+        const defTypeTitle = document.createElement('h3')
+        defTypeTitle.appendChild(document.createTextNode(def.__defType))
+        container.appendChild(defTypeTitle)
+      }
+
       const newChild = document.createElement('a')
-      newChild.href = `#${encodeURIComponent(def.__name)}`
-      newChild.appendChild(document.createTextNode(def.__name))
+      newChild.href = `#${def.__defID}`
+      newChild.appendChild(document.createTextNode(def.__defID))
       container.appendChild(newChild)
     })
     return container
   }
 
-  function getDefParents(defName) {
-    const def = defs[defName]
+  function getDefParents(def) {
     if (!def) return []
-    const parentName = def.__parentName
-    if (!parentName) return []
-    if (parentName === defName) return [defName]
+    const parentID = def.__parentID
+    if (!parentID || !defs[parentID]) return []
+    if (parentID === def.__defID) return [def]
 
-    return [...getDefParents(parentName), parentName]
+    return [...getDefParents(defs[parentID]), defs[parentID]]
   }
 
-  function getDefChildrens(defName) {
-    const def = defs[defName]
+  function getDefChildrens(def) {
     if (!def) return []
 
-    return Object.values(defs)
-      .filter(testDef => {
-        const parentName = testDef.__parentName
-        return parentName === defName
-      })
-      .map(def => def.__name)
+    return Object.values(defs).filter(testDef => testDef.__parentID === def.__defID)
   }
 
-  function getDefContent(defName) {
-    const def = defs[defName]
-
+  function getDefContent(defID) {
+    const def = defs[defID]
     // Content list
     const container = document.createElement('div')
     // Title
     const title = document.createElement('h2')
-    title.id = encodeURIComponent(defName)
-    title.appendChild(document.createTextNode(defName))
+    title.id = def.__defID
+    title.appendChild(document.createTextNode(def.__defID))
     container.appendChild(title)
 
     // Parents
-    const parents = getDefParents(defName)
+    const parents = getDefParents(def)
     if (parents.length) {
       const title = document.createElement('b')
       title.appendChild(document.createTextNode('Parents: '))
       container.appendChild(title)
 
-      parents.forEach((parentName, index) => {
+      parents.forEach((parent, index) => {
         const parentLink = document.createElement('a')
-        parentLink.href = `#${encodeURIComponent(parentName)}`
-        parentLink.appendChild(document.createTextNode(parentName))
+        parentLink.href = `#${parent.__defID}`
+        parentLink.appendChild(document.createTextNode(parent.__defID))
         container.appendChild(parentLink)
         container.appendChild(document.createTextNode(' > '))
         if (index === parents.length - 1) {
-          container.appendChild(document.createTextNode(defName))
+          container.appendChild(document.createTextNode(def.__defID))
         }
       })
     }
@@ -117,16 +128,16 @@ async function main() {
     container.appendChild(document.createElement('br'))
 
     // Childrens
-    const childrens = getDefChildrens(defName)
+    const childrens = getDefChildrens(def)
     if (childrens.length) {
       const title = document.createElement('b')
       title.appendChild(document.createTextNode('Chidrens: '))
       container.appendChild(title)
 
-      childrens.forEach((childrenName, index) => {
+      childrens.forEach((children, index) => {
         const parentLink = document.createElement('a')
-        parentLink.href = `#${encodeURIComponent(childrenName)}`
-        parentLink.appendChild(document.createTextNode(childrenName))
+        parentLink.href = `#${children.__defID}`
+        parentLink.appendChild(document.createTextNode(children.__defID))
         container.appendChild(parentLink)
         if (index !== childrens.length - 1) {
           container.appendChild(document.createTextNode(', '))
@@ -137,12 +148,51 @@ async function main() {
     container.appendChild(document.createElement('br'))
 
     // Extra data
-    const extraData = document.createElement('pre')
-    extraData.appendChild(document.createTextNode(JSON.stringify(def, undefined, 2)))
-    container.appendChild(extraData)
+    const extraDataElm = document.createElement('pre')
+    const extraDataHtml = getExtraDataHtml(def)
+    extraDataElm.innerHTML = extraDataHtml
+    container.appendChild(extraDataElm)
 
     return container
   }
+
+  function getExtraDataHtml(def) {
+    const keysThatAreNotArraysOfThings = new Set(['label'])
+    function replacer(key, value) {
+      if (key === 'defName' || key === 'parent') return
+      if (key === '$') {
+        value = Object.assign({}, value)
+        delete value.ParentName
+        delete value.Name
+        if (Object.keys(value).length === 0) return
+      }
+      if (
+        Array.isArray(value) &&
+        !keysThatAreNotArraysOfThings.has(key) &&
+        value.length &&
+        typeof value[0] === 'string'
+      ) {
+        value = value.map(val => {
+          if (!defs[val]) return val
+          // Add links to all defs with that name
+          let response = `<a href='#${encodeURIComponent(val)}'>${val}</a>`
+          let index = 2
+          while (defs[`${val}-${index}`]) {
+            response += `, <a href='#${encodeURIComponent(`${val}-${index}`)}'>${val}-${index}</a>`
+            index++
+          }
+          return response
+        })
+      }
+
+      return value
+    }
+
+    return JSON.stringify(def, replacer, 2)
+  }
+
+  onHashChange()
+  onSearchChange()
 }
 main()
 

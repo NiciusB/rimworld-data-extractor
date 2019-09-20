@@ -4,20 +4,31 @@
     <style>
         body {
             font-family: sans-serif;
+            margin: 0;
+            width: 100%;
+            min-width: 100%;
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 28% 72%;
+            grid-template-rows: 100vh 100%;
+            background-color: #ddd;
+            overflow-y: scroll;
         }
-        
-        h1,
+
         h2 {
-            margin: 3px;
+            margin: 0;
+            padding: 1em;
             text-align: center;
+        }
+        h3 {
+            font-weight: 400;
+            font-size: 1.1em;
+            margin: 0;
+            padding: 10px 0px;
         }
         
         #HTML_Side {
-            background-color: #ddd;
-            height: 95%;
-            width: 28%;
-            padding: 0 20px 0 0;
-            float: left;
+            max-height: 100%;
             display: flex;
             flex-direction: column;
         }
@@ -42,17 +53,15 @@
             margin-bottom: 0.5em;
             font-size: 1.1em;
             padding: 0.3em;
+            margin: 0.3em;
         }
-        
+
         #HTML_Info {
-            background-color: #ddd;
-            height: 95%;
-            display: block;
+            padding-left: 20px;
         }
         
         #HTML_Info pre {
             max-width: 100%;
-            max-height: 500px;
             overflow: auto;
             padding: 10px;
             background-color: #eee;
@@ -61,7 +70,6 @@
 </head>
 
 <body>
-    <h1>Rimworld XML Auto-Documentation</h1>
     <div id="HTML_Side">
         <input id="searchInput" type="search" autocomplete="off" value="" placeholder="Search" />
         <div id="idsList"></div>
