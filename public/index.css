@@ -1,0 +1,70 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+  width: 100%;
+  min-width: 100%;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 28% 72%;
+  grid-template-rows: 100vh 100%;
+  background-color: #ddd;
+  overflow-y: scroll;
+}
+
+h2 {
+  margin: 0;
+  padding: 1em;
+  text-align: center;
+}
+
+h3 {
+  font-weight: 400;
+  font-size: 1.1em;
+  margin: 0;
+  padding: 10px 0px;
+}
+
+#HTML_Side {
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#HTML_Side #idsList {
+  flex-grow: 1;
+  overflow: auto;
+  padding: 0 10px;
+}
+
+#HTML_Side a {
+  display: block;
+  padding: 5px;
+}
+
+#HTML_Side a:hover {
+  background-color: #eee;
+}
+
+#HTML_Side #searchInput {
+  width: 100%;
+  margin-bottom: 0.5em;
+  font-size: 1.1em;
+  padding: 0.3em;
+  margin: 0.3em;
+}
+
+#HTML_Info pre {
+  max-width: 100%;
+  overflow: auto;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+#HTML_Info .singleDefContainer {
+  padding: 20px;
+  transition: background-color 0.3s ease-in-out;
+  background-color: #ddd;
+}
+#HTML_Info .singleDefContainer.highlight {
+  background-color: hsl(60, 20%, 87%);
+}

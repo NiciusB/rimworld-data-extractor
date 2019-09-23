@@ -8,18 +8,35 @@ const handler = require('serve-handler')
 const http = require('http')
 
 const writeFileAsync = promisify(fs.writeFile)
+const lstatAsync = promisify(fs.lstat)
 
 const args = arg({
   '--rimworldGamePath': String,
-  '--resultPath': String,
 })
 
 async function main() {
-  const rimworldGamePath = args['--rimworldGamePath']
+  let rimworldGamePath = args['--rimworldGamePath']
   const resultPath = path.join(__dirname, 'public', 'result.json')
 
   if (!rimworldGamePath) {
-    console.log('Param --rimworldGamePath is needed')
+    // Test common paths for the game dir:
+    const testPaths = [
+      'C:/SteamLibrary/steamapps/common/RimWorld',
+      'D:/SteamLibrary/steamapps/common/RimWorld',
+      'E:/SteamLibrary/steamapps/common/RimWorld',
+    ]
+    for (let testPath of testPaths) {
+      if (await isPathDir(testPath)) {
+        rimworldGamePath = testPath
+        console.log(
+          `Auto-detected '${testPath}' as the Rimworld installation folder, since no argument '--rimworldGamePath' was provided`
+        )
+      }
+    }
+  }
+
+  if (!rimworldGamePath) {
+    console.log('Argument --rimworldGamePath is needed, since no Rimworld installation was detected')
     return
   }
 
@@ -37,3 +54,13 @@ async function main() {
   })
 }
 main()
+
+async function isPathDir(path) {
+  try {
+    const stat = await lstatAsync(path)
+    return stat.isDirectory()
+  } catch (e) {
+    // lstatSync throws an error if path doesn't exist
+    return false
+  }
+}

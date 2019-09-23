@@ -3,9 +3,9 @@ async function main() {
   const infoList = document.getElementById('HTML_Info')
   const searchInput = document.getElementById('searchInput')
 
+  // Parse defs from result.json
   const defsByType = await window.fetch('result.json').then(res => res.json())
   const defs = {}
-
   Object.keys(defsByType).forEach(defType => {
     defsByType[defType]
       .map(def => {
@@ -29,17 +29,37 @@ async function main() {
 
   window.addEventListener('hashchange', onHashChange, false)
   function onHashChange() {
-    let hash = location.hash.slice(1)
-    if (hash === '') hash = 'Root'
+    const hash = location.hash.slice(1)
+    let defNameFromHash = hash.split('-')[0]
+    if (defNameFromHash === '') defNameFromHash = 'Root'
 
-    if (!defs[hash]) return
+    if (!defs[defNameFromHash]) return
 
-    // add html content
-    const defContent = getDefContent(hash)
+    // remove old content, and add new
     while (infoList.firstChild) {
       infoList.removeChild(infoList.firstChild)
     }
-    infoList.appendChild(defContent)
+
+    let defID = { num: 1, id: defNameFromHash }
+    while (defs[defID.id]) {
+      const defContent = getDefContent(defID.id)
+      infoList.appendChild(defContent)
+
+      defID.num++
+      defID.id = `${defNameFromHash}-${defID.num}`
+    }
+
+    const hasMoreThanOneDefinition = defID.num > 2
+    const targetDiv = document.getElementById(hash)
+    if (targetDiv) {
+      targetDiv.scrollIntoView()
+      if (hasMoreThanOneDefinition) {
+        targetDiv.classList.add('highlight')
+        setTimeout(() => {
+          targetDiv.classList.remove('highlight')
+        }, 800)
+      }
+    }
   }
 
   const onSearchChange = debounce(() => {
@@ -74,7 +94,7 @@ async function main() {
 
       const newChild = document.createElement('a')
       newChild.href = `#${def.__defID}`
-      newChild.appendChild(document.createTextNode(def.__defID))
+      newChild.appendChild(document.createTextNode(def.__name))
       container.appendChild(newChild)
     })
     return container
@@ -99,10 +119,12 @@ async function main() {
     const def = defs[defID]
     // Content list
     const container = document.createElement('div')
+    container.classList.add('singleDefContainer')
+    container.id = def.__defID
     // Title
     const title = document.createElement('h2')
-    title.id = def.__defID
-    title.appendChild(document.createTextNode(def.__defID))
+    const titleText = `${def.__defID} (${def.__defType.replace('Def', '')})`
+    title.appendChild(document.createTextNode(titleText))
     container.appendChild(title)
 
     // Parents
@@ -174,13 +196,7 @@ async function main() {
       ) {
         value = value.map(val => {
           if (!defs[val]) return val
-          // Add links to all defs with that name
           let response = `<a href='#${encodeURIComponent(val)}'>${val}</a>`
-          let index = 2
-          while (defs[`${val}-${index}`]) {
-            response += `, <a href='#${encodeURIComponent(`${val}-${index}`)}'>${val}-${index}</a>`
-            index++
-          }
           return response
         })
       }
